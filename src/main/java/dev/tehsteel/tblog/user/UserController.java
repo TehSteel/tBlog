@@ -21,10 +21,11 @@ public class UserController {
 
 	@Autowired
 	private final UserService userService;
-	
+
 	@Autowired
 	private final AuthenticationManager authenticationManager;
 
+	/* Register a new user request */
 	@PostMapping("/register")
 	public ResponseEntity<String> registerUser(@RequestBody final UserRegisterRequest request) {
 		final User newUser = userService.insertUser(request);
@@ -37,6 +38,7 @@ public class UserController {
 		}
 	}
 
+	/* Login as a user, Receives JWT token for stateless loggings */
 	@PostMapping("/login")
 	public ResponseEntity<String> login(@RequestBody final UserLoginRequest request) {
 		final Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
@@ -48,8 +50,10 @@ public class UserController {
 		return new ResponseEntity<>("Wrong password", HttpStatus.UNAUTHORIZED);
 	}
 
+	/* A test request to validate that everything is ok */
 	@GetMapping("/test")
 	public ResponseEntity<String> test() {
+		/* Get current user email by jwt */
 		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		final String username = authentication.getName();
 

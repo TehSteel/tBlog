@@ -40,20 +40,7 @@ public class BlogController {
 
 		return new ResponseEntity<>("Created blog successfully", HttpStatus.OK);
 	}
-
-	@PostMapping("/test")
-	public ResponseEntity<String> testBlog() {
-		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-		for (int i = 0; i < 100; i++) {
-			final Blog blog = blogService.insertBlog(new BlogCreationRequest("title " + i, "text: " + i), userService.getUserByEmail(authentication.getName()));
-		}
-
-
-		return new ResponseEntity<>("Created blog successfully", HttpStatus.OK);
-	}
-
-
+	
 	/* Perform deletion on user's blog post */
 	@DeleteMapping("/delete/{id}")
 	public ResponseEntity<String> deleteBlog(@PathVariable(name = "id") final long blogId) {

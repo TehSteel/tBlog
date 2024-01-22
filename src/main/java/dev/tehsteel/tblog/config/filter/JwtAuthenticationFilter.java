@@ -24,29 +24,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	protected void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response, final FilterChain filterChain) throws ServletException, IOException {
 		final String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-		// Here we are checking if there is headers and if there is any headers token
+		/* Here we are checking if there is headers and if there is any headers token */
 		if (header == null || !header.startsWith("Bearer ")) {
 			filterChain.doFilter(request, response);
 			return;
 		}
 
 
-		// Splitting to get the acutal token
+		/* Splitting to get the acutal token */
 		final String token = header.split(" ")[1].trim();
 
-		// If token is empty just return
+		/* If token is empty just return */
 		if (token.isEmpty()) {
 			filterChain.doFilter(request, response);
 			return;
 		}
 
-		// If the token is expired / null unlucky
+		/* If the token is expired / null unlucky */
 		if (JwtUtil.isExpired(token) || JwtUtil.getClaims(token) == null) {
 			filterChain.doFilter(request, response);
 			return;
 		}
 
-		// Here we create a UsernamePasswordAuthenticationToken using the jwt email and credentials we set as null since there is no password we loggin as JWT
+		/* Here we create a UsernamePasswordAuthenticationToken using the jwt email and credentials we set as null since there is no password we loggin as JWT */
 
 		// TODO replace the new arraylist with Role
 		final Authentication authentication = new UsernamePasswordAuthenticationToken(JwtUtil.getClaims(token).getSubject(), null, new ArrayList<>());

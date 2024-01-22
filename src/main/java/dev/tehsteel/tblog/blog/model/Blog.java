@@ -10,6 +10,7 @@ import java.util.Date;
 @Data
 @Table(name = "blogs")
 public class Blog {
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
