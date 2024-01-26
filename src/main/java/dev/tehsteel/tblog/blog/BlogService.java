@@ -1,18 +1,12 @@
 package dev.tehsteel.tblog.blog;
 
-import dev.tehsteel.tblog.blog.event.BlogCreationEvent;
-import dev.tehsteel.tblog.blog.event.BlogDeleteEvent;
-import dev.tehsteel.tblog.blog.event.BlogUpdateEvent;
+import com.google.common.cache.Cache;
 import dev.tehsteel.tblog.blog.model.Blog;
 import dev.tehsteel.tblog.blog.model.BlogResponse;
 import dev.tehsteel.tblog.blog.model.request.BlogCreationRequest;
 import dev.tehsteel.tblog.user.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,8 +19,8 @@ import java.util.Date;
 public class BlogService {
 
 
-	private final ApplicationEventPublisher eventPublisher;
 	private final BlogRepository blogRepository;
+	private final Cache<Long, Blog> blogCache;
 
 	/**
 	 * Inserts a new blog post into the system.
@@ -36,15 +30,15 @@ public class BlogService {
 	 * @return The inserted blog entity.
 	 */
 	public Blog insertBlog(final BlogCreationRequest request, final User poster) {
+		log.debug("Creating new blog by: {}", poster.getName());
 		final Blog blog = new Blog();
 
 		blog.setTitle(request.title());
 		blog.setText(request.text());
 		blog.setPoster(poster);
-
+		
+		blogCache.put(blog.getId(), blog);
 		blogRepository.save(blog);
-
-		eventPublisher.publishEvent(new BlogCreationEvent(this, blog));
 
 		return blog;
 	}
@@ -55,12 +49,11 @@ public class BlogService {
 	 * @param blog The blog entity to be updated.
 	 * @return The updated blog entity.
 	 */
-	@CachePut(value = "blogCache", key = "#blog.id")
 	public Blog updateBlog(final Blog blog) {
 		blog.setLastUpdated(new Date());
 		blogRepository.save(blog);
 
-		eventPublisher.publishEvent(new BlogUpdateEvent(this, blog));
+		blogCache.put(blog.getId(), blog);
 
 		return blog;
 	}
@@ -81,23 +74,39 @@ public class BlogService {
 	 * @param id The id of the blog post.
 	 * @return The blog entity corresponding to the given id, or {@code null} if not found.
 	 */
-	@Cacheable(value = "blogCache", key = "#id")
 	public Blog getBlogById(final long id) {
 		log.debug("Fetching blog by id: {}", id);
-		return blogRepository.findById(id).orElse(null);
+
+		Blog blog = blogCache.getIfPresent(id);
+		if (blog != null) {
+			log.debug("Found blog in cache by id: {}", id);
+			return blog;
+		}
+
+		blog = blogRepository.findById(id).orElse(null);
+
+		if (blog != null) {
+			blogCache.put(blog.getId(), blog);
+			log.debug("Blog fetched from repository and cached by id: {}", id);
+		} else {
+			log.debug("Blog not found for id: {}", id);
+		}
+
+		return blog;
 	}
+
 
 	/**
 	 * Removes a blog post from the system by its id.
 	 *
 	 * @param id The id of the blog post to be removed.
 	 */
-	@CacheEvict(value = "blogCache", key = "#id")
 	public void removeBlogById(final long id) {
 		log.debug("Deleting blog by id: {}", id);
 		final Blog blog = blogRepository.findById(id).orElse(null);
 		if (blog == null) return;
+		log.debug("Deleted blog by id: {}", id);
+		blogCache.invalidate(id);
 		blogRepository.deleteById(id);
-		eventPublisher.publishEvent(new BlogDeleteEvent(this, blog));
 	}
 }
