@@ -11,6 +11,7 @@ import org.springframework.core.env.Environment;
 @SpringBootApplication
 @ComponentScan
 public class BlogApplication implements CommandLineRunner {
+
 	@Autowired
 	private Environment environment;
 

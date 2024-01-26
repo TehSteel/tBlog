@@ -5,27 +5,19 @@ import dev.tehsteel.tblog.user.model.Role;
 import dev.tehsteel.tblog.user.model.User;
 import dev.tehsteel.tblog.user.model.request.UserRegisterRequest;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 
-	@Autowired
 	private final ApplicationEventPublisher eventPublisher;
-
-	@Autowired
 	private final UserRepository userRepository;
-
-	@Autowired
 	private final PasswordEncoder passwordEncoder;
 
 	/**
@@ -62,9 +54,11 @@ public class UserService {
 	 * @param id The user id to fetch
 	 * @return The fetched user or null
 	 */
-	@Cacheable(value = "userCache", key = "#id")
+
+	// TODO Write a uni testing to check if caching is fine
+	//@Cacheable(value = "userCache", key = "#id")
 	public User getUserById(final Long id) {
-		LOGGER.debug("Fetching user by id: {}", id);
+		log.debug("Fetching user by id: {}", id);
 		return userRepository.findById(id).orElse(null);
 	}
 
@@ -75,9 +69,10 @@ public class UserService {
 	 * @param email The user email to fetch
 	 * @return The fetched user or null
 	 */
-	@Cacheable(value = "userCache", key = "#email")
+	// TODO Write a uni testing to check if caching is fine
+	//@Cacheable(value = "userCache", key = "#email")
 	public User getUserByEmail(final String email) {
-		LOGGER.debug("Fetching user by email: {}", email);
+		log.debug("Fetching user by email: {}", email);
 		return userRepository.findByEmail(email).orElse(null);
 	}
 }

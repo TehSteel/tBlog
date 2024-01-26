@@ -8,9 +8,7 @@ import dev.tehsteel.tblog.blog.model.BlogResponse;
 import dev.tehsteel.tblog.blog.model.request.BlogCreationRequest;
 import dev.tehsteel.tblog.user.model.User;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -21,16 +19,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BlogService {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(BlogService.class);
 
-	@Autowired
 	private final ApplicationEventPublisher eventPublisher;
-
-	@Autowired
 	private final BlogRepository blogRepository;
 
 	/**
@@ -88,7 +83,7 @@ public class BlogService {
 	 */
 	@Cacheable(value = "blogCache", key = "#id")
 	public Blog getBlogById(final long id) {
-		LOGGER.debug("Fetching blog by id: {}", id);
+		log.debug("Fetching blog by id: {}", id);
 		return blogRepository.findById(id).orElse(null);
 	}
 
@@ -98,8 +93,8 @@ public class BlogService {
 	 * @param id The id of the blog post to be removed.
 	 */
 	@CacheEvict(value = "blogCache", key = "#id")
-	public void removeBlogPost(final long id) {
-		LOGGER.debug("Deleting blog by id: {}", id);
+	public void removeBlogById(final long id) {
+		log.debug("Deleting blog by id: {}", id);
 		final Blog blog = blogRepository.findById(id).orElse(null);
 		if (blog == null) return;
 		blogRepository.deleteById(id);

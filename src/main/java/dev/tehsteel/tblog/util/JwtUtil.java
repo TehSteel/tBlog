@@ -6,6 +6,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -14,6 +15,7 @@ import java.util.Date;
 /**
  * JwtUtil is a utility class for handling <a href="https://jwt.io/introduction">JWT</a>
  */
+@Slf4j
 public final class JwtUtil {
 
 
@@ -37,11 +39,17 @@ public final class JwtUtil {
 	 * @return A JWT string representing the jwt token use getClaims to get all claims.
 	 */
 	public static String createToken(final User user) {
-		final Claims claims = Jwts.claims().subject(user.getEmail()).build();
+		log.info(user.getRole().name());
+		final Claims claims = Jwts
+				.claims()
+				.add("role", user.getRole().getAsAuthority())
+				.subject(user.getEmail())
+				.build();
 		final long expMillis = 86400 * 1000 * 5;
 
 		final Date now = new Date();
 		final Date exp = new Date(now.getTime() + expMillis);
+
 
 		return Jwts.builder()
 				.claims(claims)

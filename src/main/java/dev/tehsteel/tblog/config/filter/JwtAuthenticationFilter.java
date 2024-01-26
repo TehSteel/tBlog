@@ -1,6 +1,7 @@
 package dev.tehsteel.tblog.config.filter;
 
 import dev.tehsteel.tblog.util.JwtUtil;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,12 +10,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -40,16 +42,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			return;
 		}
 
+		final Claims claims = JwtUtil.getClaims(token);
+
 		/* If the token is expired / null unlucky */
-		if (JwtUtil.isExpired(token) || JwtUtil.getClaims(token) == null) {
+		if (JwtUtil.isExpired(token) || claims == null) {
 			filterChain.doFilter(request, response);
 			return;
 		}
 
 		/* Here we create a UsernamePasswordAuthenticationToken using the jwt email and credentials we set as null since there is no password we loggin as JWT */
-
-		// TODO replace the new arraylist with Role
-		final Authentication authentication = new UsernamePasswordAuthenticationToken(JwtUtil.getClaims(token).getSubject(), null, new ArrayList<>());
+		final Authentication authentication = new UsernamePasswordAuthenticationToken(JwtUtil.getClaims(token).getSubject(), null, List.of(new SimpleGrantedAuthority(claims.get("role", String.class))));
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		filterChain.doFilter(request, response);

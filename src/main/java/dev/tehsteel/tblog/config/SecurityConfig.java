@@ -4,9 +4,7 @@ import dev.tehsteel.tblog.config.filter.JwtAuthenticationFilter;
 import dev.tehsteel.tblog.user.model.CustomUserDetailsService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,14 +27,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(SecurityConfig.class);
 
-	@Autowired
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
 	/* Create a custom UserDetailsService for managing user data */
@@ -53,7 +50,8 @@ public class SecurityConfig {
 				.csrf(AbstractHttpConfigurer::disable)
 				/* Allow anyone to access register and login endpoint */
 				.authorizeHttpRequests(request ->
-						request.requestMatchers("/api/user/register", "/api/user/login").permitAll()
+						request
+								.requestMatchers("/api/user/register", "/api/user/login").permitAll()
 								.anyRequest().authenticated()
 				)
 				/* Allow JWT stateless token login */
@@ -61,7 +59,7 @@ public class SecurityConfig {
 				/* If there is any error that happening just return unauthorized */
 				.exceptionHandling(httpSecurityExceptionHandlingConfigurer -> httpSecurityExceptionHandlingConfigurer
 						.authenticationEntryPoint((request, response, ex) -> {
-							LOGGER.info(ex.getMessage());
+							log.info(ex.getMessage());
 							response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage());
 						}))
 				/* Add the JWT auth filter before accessing any endpoint */
