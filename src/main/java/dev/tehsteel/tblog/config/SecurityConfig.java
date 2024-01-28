@@ -51,7 +51,7 @@ public class SecurityConfig {
 				/* Allow anyone to access register and login endpoint */
 				.authorizeHttpRequests(request ->
 						request
-								.requestMatchers("/api/user/register", "/api/user/login").permitAll()
+								.requestMatchers("/api/user/register", "/api/user/login", "/api/user/verify").permitAll()
 								.anyRequest().authenticated()
 				)
 				/* Allow JWT stateless token login */

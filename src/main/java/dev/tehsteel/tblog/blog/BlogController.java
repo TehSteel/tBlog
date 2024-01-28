@@ -8,6 +8,7 @@ import dev.tehsteel.tblog.user.UserService;
 import dev.tehsteel.tblog.user.model.Role;
 import dev.tehsteel.tblog.user.model.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/blog")
+@Slf4j
 public class BlogController {
 
 	private final BlogService blogService;
@@ -30,6 +32,7 @@ public class BlogController {
 		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
 		final Blog blog = blogService.insertBlog(request, userService.getUserByEmail(authentication.getName()));
+
 
 		if (blog == null) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -51,10 +54,8 @@ public class BlogController {
 		}
 
 		/* If user doesn't have admin role and not the owner of the blog just return */
-		if (user.getRole() != Role.ADMIN) {
-			if (!blog.getPoster().getEmail().equals(user.getEmail())) {
-				return new ResponseEntity<>("You are not owner of this blog.", HttpStatus.FORBIDDEN);
-			}
+		if (!hasPermission(user, blog)) {
+			return new ResponseEntity<>("You are not owner of this blog.", HttpStatus.FORBIDDEN);
 		}
 
 		blogService.removeBlogById(blogId);
@@ -70,15 +71,16 @@ public class BlogController {
 		final User user = userService.getUserByEmail(authentication.getName());
 
 
+		log.info(user.getName());
+		log.info(authentication.getName());
+
 		if (blog == null) {
 			return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
 		}
-		
+
 		/* If user doesn't have admin role and not the owner of the blog just return */
-		if (user.getRole() != Role.ADMIN) {
-			if (!blog.getPoster().getEmail().equals(user.getName())) {
-				return new ResponseEntity<>(BlogResponse.fromBlog(blog), HttpStatus.FORBIDDEN);
-			}
+		if (!hasPermission(user, blog)) {
+			return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
 		}
 
 		blog.setTitle(request.title());
@@ -91,10 +93,18 @@ public class BlogController {
 	/* Look on a user's blog post */
 	@GetMapping("/{id}")
 	public ResponseEntity<BlogResponse> getBlog(@PathVariable(name = "id") final int blogId) {
+		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		final Blog blog = blogService.getBlogById(blogId);
+		final User user = userService.getUserByEmail(authentication.getName());
 
 		if (blog == null) {
 			return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+		}
+
+		if (!blog.isShown()) {
+			if (user.getRole() != Role.ADMIN) {
+				return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+			}
 		}
 
 		return new ResponseEntity<>(BlogResponse.fromBlog(blog), HttpStatus.OK);
@@ -104,6 +114,11 @@ public class BlogController {
 	@GetMapping("/blogs")
 	public Page<BlogResponse> getBlogs(@RequestParam("pageNumber") final int pageNumber) {
 		return blogService.getBlogs(PageRequest.of(pageNumber, 10));
+	}
+
+
+	private boolean hasPermission(final User user, final Blog blog) {
+		return user.getRole() == Role.ADMIN || blog.getPoster().getEmail().equals(user.getEmail());
 	}
 
 }

@@ -10,7 +10,7 @@ import java.util.Date;
 @Data
 @Table(name = "blogs")
 public class Blog {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -24,4 +24,6 @@ public class Blog {
 
 	private Date lastUpdated = new Date();
 	private Date creationDate = new Date();
+
+	private boolean shown = true;
 }

@@ -34,7 +34,13 @@ public class User implements UserDetails {
 	@Enumerated(EnumType.STRING)
 	private Role role;
 
+
 	private Date accountCreation = new Date();
+
+	private boolean verified;
+
+	@Column(name = "enabled")
+	private boolean enabled;
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -63,7 +69,7 @@ public class User implements UserDetails {
 
 	@Override
 	public boolean isEnabled() {
-		return true;
+		return enabled && verified;
 	}
 
 

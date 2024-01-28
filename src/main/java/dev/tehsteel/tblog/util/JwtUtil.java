@@ -50,7 +50,6 @@ public final class JwtUtil {
 		final Date now = new Date();
 		final Date exp = new Date(now.getTime() + expMillis);
 
-
 		return Jwts.builder()
 				.claims(claims)
 				.subject(user.getEmail())

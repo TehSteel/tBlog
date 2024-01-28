@@ -1,8 +1,10 @@
 package dev.tehsteel.tblog.user;
 
+import com.google.common.cache.Cache;
 import dev.tehsteel.tblog.user.model.User;
 import dev.tehsteel.tblog.user.model.request.UserLoginRequest;
 import dev.tehsteel.tblog.user.model.request.UserRegisterRequest;
+import dev.tehsteel.tblog.user.model.verification.UserVerification;
 import dev.tehsteel.tblog.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,11 +15,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
 
+	private final Cache<UUID, UserVerification> userVerificationCache;
 	private final UserService userService;
 	private final AuthenticationManager authenticationManager;
 
@@ -33,6 +38,30 @@ public class UserController {
 			return new ResponseEntity<>("Email is already registered.", HttpStatus.CONFLICT);
 		}
 	}
+
+
+	@PostMapping("/verify")
+	public ResponseEntity<String> verify(@RequestParam("token") final UUID token) {
+		final UserVerification userVerification = userVerificationCache.getIfPresent(token);
+		if (userVerification == null) {
+			return new ResponseEntity<>("Verification token is invalid.", HttpStatus.NOT_FOUND);
+		}
+
+
+		if (userVerification.isCodeExpired()) {
+			return new ResponseEntity<>("Too late buddy.", HttpStatus.FORBIDDEN);
+		}
+
+		final User user = userService.getUserById(userVerification.getUserId());
+
+		user.setVerified(true);
+		user.setEnabled(true);
+
+		userService.updateUser(user);
+
+		return null;
+	}
+
 
 	/* Login as a user, Receives JWT token for stateless loggings */
 	@PostMapping("/login")
