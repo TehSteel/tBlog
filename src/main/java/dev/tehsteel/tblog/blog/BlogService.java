@@ -36,9 +36,9 @@ public class BlogService {
 		blog.setTitle(request.title());
 		blog.setText(request.text());
 		blog.setPoster(poster);
-		
-		blogCache.put(blog.getId(), blog);
+
 		blogRepository.save(blog);
+		blogCache.put(blog.getId(), blog);
 
 		return blog;
 	}
@@ -47,15 +47,11 @@ public class BlogService {
 	 * Updates an existing blog post in the system.
 	 *
 	 * @param blog The blog entity to be updated.
-	 * @return The updated blog entity.
 	 */
-	public Blog updateBlog(final Blog blog) {
+	public void updateBlog(final Blog blog) {
 		blog.setLastUpdated(new Date());
-		blogRepository.save(blog);
 
 		blogCache.put(blog.getId(), blog);
-
-		return blog;
 	}
 
 	/**
