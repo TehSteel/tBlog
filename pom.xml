@@ -111,6 +111,7 @@
                 </configuration>
             </plugin>
         </plugins>
+        <finalName>tblog</finalName>
     </build>
 
 </project>
